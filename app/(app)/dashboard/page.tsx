@@ -46,6 +46,8 @@ interface StatsData {
   referralCount: number;
   referralCode: string;
   username: string;
+  lastMined: number | null;
+  earnRatePerSecond: number;
   marketData: MarketData;
   transactions: Transaction[];
 }
@@ -89,6 +91,38 @@ function useCountUp(target: number, duration = 600): number {
   return value;
 }
 
+// Computes a live-increasing display balance without waiting for DB updates.
+// DB balance updates once daily via cron; this adds accrued earnings in real time.
+function useLiveBalance(
+  dbBalance: number,
+  earnRatePerSecond: number,
+  lastMined: number | null,
+): number {
+  const computeLive = () => {
+    if (earnRatePerSecond <= 0 || lastMined === null) return dbBalance;
+    const secondsElapsed = Math.max(0, (Date.now() - lastMined) / 1000);
+    return dbBalance + earnRatePerSecond * secondsElapsed;
+  };
+
+  const [display, setDisplay] = useState(computeLive);
+
+  // Resync baseline whenever the DB value or rate changes
+  useEffect(() => {
+    setDisplay(computeLive());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbBalance, earnRatePerSecond, lastMined]);
+
+  // Tick every second to advance the displayed balance
+  useEffect(() => {
+    if (earnRatePerSecond <= 0) return;
+    const id = setInterval(() => setDisplay(computeLive()), 1000);
+    return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbBalance, earnRatePerSecond, lastMined]);
+
+  return display;
+}
+
 const CARD_STYLE = {
   background: 'rgba(255,255,255,0.04)',
   border: '1px solid rgba(255,255,255,0.08)',
@@ -103,7 +137,11 @@ export default function DashboardPage() {
   const [toggleLoading, setToggleLoading] = useState(false);
   const [priceChart, setPriceChart] = useState<PricePoint[]>([]);
 
-  const balance = useCountUp(stats?.balance ?? 0);
+  const balance = useLiveBalance(
+    stats?.balance ?? 0,
+    stats?.earnRatePerSecond ?? 0,
+    stats?.lastMined ?? null,
+  );
   const hashrate = useCountUp(stats?.hashrate ?? 0);
 
   const fetchStats = useCallback(async () => {
