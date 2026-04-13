@@ -1,8 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CryptoMine
 
-## Getting Started
+A production-ready crypto mining simulation SaaS with real Dogecoin network data.
 
-First, run the development server:
+**Admin login:** `admin@cryptomine.io` / `admin123`  
+**Demo login:** `demo@cryptomine.io` / `demo1234`
+
+## Setup
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Configure .env.local (already present)
+# Add your MongoDB Atlas URI, whitelist your IP in Atlas Network Access
+
+# 3. Seed the database
+npm run seed
+
+# 4. Run development server
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000)
+
+## Tech Stack
+
+Next.js 16 · MongoDB Atlas + Mongoose · NextAuth v5 · Tailwind CSS v4 · Recharts · CoinGecko API
+
+## Architecture
+
+- `app/(auth)/` — Login, Signup
+- `app/(app)/` — Dashboard, Wallet, Referrals, Upgrade, Admin (with sidebar)
+- `app/api/` — All API routes (auth, user, wallet, admin, cron, market)
+- `lib/` — DB, auth, mining engine, constants
+- `models/` — Mongoose schemas (User, Transaction, Withdrawal, MarketCache)
+- `proxy.ts` — Route protection (Next.js 16 proxy convention)
+- `scripts/seed.ts` — Database seeder
+
+## Cron Job
+
+`vercel.json` runs `/api/cron/mine` every 2 minutes. The endpoint requires `Authorization: Bearer <CRON_SECRET>`.
+
+---
+
+_Original scaffold:_
+
+
 
 ```bash
 npm run dev
