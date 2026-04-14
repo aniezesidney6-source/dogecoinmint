@@ -8,6 +8,9 @@ export const authConfig: NextAuthConfig = {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const pathname = nextUrl.pathname;
+      const user = auth?.user as { isAdmin?: boolean; isVerified?: boolean; email?: string } | undefined;
+      // Pre-existing users have no isVerified field — treat as verified
+      const isVerified = user?.isVerified ?? true;
 
       const protectedRoutes = ['/dashboard', '/wallet', '/referrals', '/upgrade'];
       const adminRoutes = ['/admin'];
@@ -16,6 +19,18 @@ export const authConfig: NextAuthConfig = {
       const isProtectedRoute = protectedRoutes.some((r) => pathname.startsWith(r));
       const isAdminRoute = adminRoutes.some((r) => pathname.startsWith(r));
       const isAuthPage = authRoutes.includes(pathname);
+
+      // Verified logged-in users don't need the verify-email page
+      if (pathname === '/verify-email' && isLoggedIn && isVerified) {
+        return Response.redirect(new URL('/dashboard', nextUrl));
+      }
+
+      // Unverified users can only access /verify-email; redirect all protected routes
+      if (isLoggedIn && !isVerified && isProtectedRoute) {
+        const url = new URL('/verify-email', nextUrl);
+        if (user?.email) url.searchParams.set('email', user.email);
+        return Response.redirect(url);
+      }
 
       if (isAuthPage && isLoggedIn) {
         return Response.redirect(new URL('/dashboard', nextUrl));
@@ -27,7 +42,6 @@ export const authConfig: NextAuthConfig = {
 
       if (isAdminRoute) {
         if (!isLoggedIn) return Response.redirect(new URL('/login', nextUrl));
-        const user = auth?.user as { isAdmin?: boolean } | undefined;
         if (!user?.isAdmin) return Response.redirect(new URL('/dashboard', nextUrl));
       }
 
@@ -38,6 +52,7 @@ export const authConfig: NextAuthConfig = {
         token.id = (user as { id?: string }).id ?? '';
         token.isAdmin = (user as { isAdmin?: boolean }).isAdmin ?? false;
         token.plan = (user as { plan?: string }).plan ?? 'free';
+        token.isVerified = user.isVerified ?? true;
       }
       return token;
     },
@@ -45,6 +60,7 @@ export const authConfig: NextAuthConfig = {
       session.user.id = token.id as string;
       session.user.isAdmin = token.isAdmin as boolean;
       session.user.plan = token.plan as string;
+      session.user.isVerified = token.isVerified as boolean;
       return session;
     },
   },

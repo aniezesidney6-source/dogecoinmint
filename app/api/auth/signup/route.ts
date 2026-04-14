@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
 import { convex } from '@/lib/convex'
 import { api } from '@/convex/_generated/api'
+import { sendWelcomeEmail, sendVerificationEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   let body: { email?: string; password?: string; username?: string; referralCode?: string }
@@ -25,7 +26,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Check for existing email or username
     const [existingEmail, existingUsername] = await Promise.all([
       convex.query(api.users.getUserByEmail, { email: email.toLowerCase() }),
       convex.query(api.users.getUserByUsername, { username }),
@@ -84,10 +84,31 @@ export async function POST(req: NextRequest) {
           })
         }
       } catch (err) {
-        // Referral failure should not block account creation
         console.error('[signup] referral processing failed:', err)
       }
     }
+
+    // Send verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString()
+    const verificationExpiry = Date.now() + 15 * 60 * 1000
+
+    await convex.mutation(api.users.setVerificationCode, {
+      userId: newUserId,
+      code: verificationCode,
+      expiry: verificationExpiry,
+    })
+
+    console.log('Sending welcome email to:', email)
+    sendWelcomeEmail(email.toLowerCase(), username).catch((e) =>
+      console.error('Welcome email failed:', e)
+    )
+    console.log('Welcome email sent')
+
+    console.log('Sending verification code to:', email)
+    sendVerificationEmail(email.toLowerCase(), username, verificationCode).catch((e) =>
+      console.error('Verification email failed:', e)
+    )
+    console.log('Verification code sent')
 
     return Response.json({
       success: true,

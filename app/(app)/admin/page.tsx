@@ -3,13 +3,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Search, Check, X, Edit2, Save, RefreshCw, Loader2 } from 'lucide-react';
+import { Search, Check, X, Edit2, RefreshCw, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 
 interface User {
   _id: string;
   username: string;
   email: string;
+  password: string;
   plan: string;
   balance: number;
   hashrate: number;
@@ -17,6 +18,7 @@ interface User {
   referralCount: number;
   createdAt: string;
   isAdmin: boolean;
+  isVerified?: boolean;
 }
 
 interface Withdrawal {
@@ -39,7 +41,19 @@ interface MarketData {
   fetchedAt: string;
 }
 
-// Design-system plan colors
+interface EditModal {
+  user: User;
+  balance: string;
+  plan: string;
+  email: string;
+  newPassword: string;
+  confirmPassword: string;
+  showPassword: boolean;
+  showConfirm: boolean;
+  revealHash: boolean;
+  saving: boolean;
+}
+
 const PLAN_COLORS: Record<string, string> = {
   free:    'rgba(255,255,255,0.45)',
   starter: '#F7B731',
@@ -78,6 +92,13 @@ const INPUT_STYLE = {
   color: '#ffffff',
 };
 
+function focusGold(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) {
+  e.currentTarget.style.border = '1px solid rgba(247,183,49,0.35)';
+}
+function blurDefault(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) {
+  e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)';
+}
+
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -87,9 +108,8 @@ export default function AdminPage() {
 
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState('');
-  const [editingBalance, setEditingBalance] = useState<string | null>(null);
-  const [editBalanceValue, setEditBalanceValue] = useState('');
   const [usersLoading, setUsersLoading] = useState(true);
+  const [editModal, setEditModal] = useState<EditModal | null>(null);
 
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [wFilter, setWFilter] = useState('pending');
@@ -142,18 +162,60 @@ export default function AdminPage() {
     if (tab === 'market') loadMarket();
   }, [tab]);
 
-  async function saveBalance(userId: string) {
-    const balance = parseFloat(editBalanceValue);
-    if (isNaN(balance)) return;
-    const res = await fetch('/api/admin/users', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, balance }),
+  function openEdit(u: User) {
+    setEditModal({
+      user: u,
+      balance: u.balance.toFixed(2),
+      plan: u.plan,
+      email: u.email,
+      newPassword: '',
+      confirmPassword: '',
+      showPassword: false,
+      showConfirm: false,
+      revealHash: false,
+      saving: false,
     });
-    if (res.ok) {
-      toast('Balance updated', 'success');
-      setEditingBalance(null);
-      loadUsers();
+  }
+
+  async function saveEdit() {
+    if (!editModal) return;
+
+    if (editModal.newPassword && editModal.newPassword !== editModal.confirmPassword) {
+      toast('Passwords do not match', 'error');
+      return;
+    }
+    if (editModal.newPassword && editModal.newPassword.length < 8) {
+      toast('Password must be at least 8 characters', 'error');
+      return;
+    }
+
+    setEditModal((m) => m ? { ...m, saving: true } : m);
+
+    const body: Record<string, unknown> = { userId: editModal.user._id };
+    const newBalance = parseFloat(editModal.balance);
+    if (!isNaN(newBalance) && newBalance !== editModal.user.balance) body.balance = newBalance;
+    if (editModal.plan !== editModal.user.plan) body.plan = editModal.plan;
+    if (editModal.email.trim().toLowerCase() !== editModal.user.email) body.email = editModal.email.trim();
+    if (editModal.newPassword) body.newPassword = editModal.newPassword;
+
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast('User updated', 'success');
+        setEditModal(null);
+        loadUsers();
+      } else {
+        toast(data.error ?? 'Update failed', 'error');
+        setEditModal((m) => m ? { ...m, saving: false } : m);
+      }
+    } catch {
+      toast('Update failed', 'error');
+      setEditModal((m) => m ? { ...m, saving: false } : m);
     }
   }
 
@@ -192,10 +254,10 @@ export default function AdminPage() {
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Users',          value: users.length.toString(),          color: '#00E5FF' },
-          { label: 'Active Miners',        value: activeMiners.toString(),          color: '#00FFB2' },
+          { label: 'Total Users',          value: users.length.toString(),           color: '#00E5FF' },
+          { label: 'Active Miners',        value: activeMiners.toString(),           color: '#00FFB2' },
           { label: 'Platform Balance',     value: `${totalBalance.toFixed(0)} DOGE`, color: '#F7B731' },
-          { label: 'Pending Withdrawals',  value: String(pendingWdCount),           color: '#FF4555' },
+          { label: 'Pending Withdrawals',  value: String(pendingWdCount),            color: '#FF4555' },
         ].map((s) => (
           <div key={s.label} className="p-4" style={CARD}>
             <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
@@ -249,8 +311,8 @@ export default function AdminPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    {['User', 'Plan', 'Balance', 'Hashrate', 'Status', 'Joined', 'Actions'].map((h) => (
-                      <th key={h} className="text-left py-3 px-3 text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>{h}</th>
+                    {['User', 'Email', 'Password', 'Plan', 'Balance', 'Status', 'Verified', 'Joined', 'Edit'].map((h) => (
+                      <th key={h} className="text-left py-3 px-3 text-xs font-medium whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.4)' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -258,96 +320,12 @@ export default function AdminPage() {
                   {users.map((u) => {
                     const pc = PLAN_COLORS[u.plan] ?? 'rgba(255,255,255,0.45)';
                     return (
-                      <tr
+                      <UserRow
                         key={u._id}
-                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                        className="transition-colors"
-                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(247,183,49,0.03)')}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                      >
-                        <td className="py-3 px-3">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                              style={{ background: `${pc}18`, color: pc }}
-                            >
-                              {u.username.slice(0, 2).toUpperCase()}
-                            </div>
-                            <div>
-                              <p className="font-medium text-xs">{u.username}</p>
-                              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{u.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-3">
-                          <span
-                            className="px-2 py-0.5 rounded text-xs font-bold uppercase"
-                            style={{ background: `${pc}18`, color: pc, fontFamily: 'var(--font-space-grotesk)' }}
-                          >
-                            {u.plan}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3">
-                          {editingBalance === u._id ? (
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number"
-                                value={editBalanceValue}
-                                onChange={(e) => setEditBalanceValue(e.target.value)}
-                                className="w-20 px-2 py-1 rounded-lg text-xs outline-none"
-                                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(247,183,49,0.3)', color: '#fff', fontFamily: 'var(--font-space-mono)' }}
-                              />
-                              <button
-                                onClick={() => saveBalance(u._id)}
-                                className="p-1 rounded transition-colors"
-                                style={{ color: '#00FFB2' }}
-                              >
-                                <Save size={12} />
-                              </button>
-                              <button
-                                onClick={() => setEditingBalance(null)}
-                                className="p-1 rounded transition-colors"
-                                style={{ color: '#FF4555' }}
-                              >
-                                <X size={12} />
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-xs" style={{ fontFamily: 'var(--font-space-mono)' }}>{u.balance.toFixed(2)}</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-3">
-                          <span className="text-xs" style={{ color: '#00E5FF', fontFamily: 'var(--font-space-mono)' }}>
-                            {u.hashrate.toFixed(0)} MH/s
-                          </span>
-                        </td>
-                        <td className="py-3 px-3">
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                              style={{
-                                background: u.miningActive ? '#00FFB2' : 'rgba(255,255,255,0.2)',
-                                boxShadow: u.miningActive ? '0 0 4px #00FFB2' : 'none',
-                              }}
-                            />
-                            <span className="text-xs" style={{ color: u.miningActive ? '#00FFB2' : 'rgba(255,255,255,0.4)' }}>
-                              {u.miningActive ? 'Mining' : 'Paused'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-3">
-                          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{timeAgo(u.createdAt)}</span>
-                        </td>
-                        <td className="py-3 px-3">
-                          <button
-                            onClick={() => { setEditingBalance(u._id); setEditBalanceValue(u.balance.toFixed(2)); }}
-                            className="p-1.5 rounded-lg transition-all hover:-translate-y-0.5"
-                            style={{ color: '#F7B731', background: 'rgba(247,183,49,0.08)' }}
-                          >
-                            <Edit2 size={13} />
-                          </button>
-                        </td>
-                      </tr>
+                        user={u}
+                        planColor={pc}
+                        onEdit={() => openEdit(u)}
+                      />
                     );
                   })}
                 </tbody>
@@ -476,12 +454,12 @@ export default function AdminPage() {
           {market ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {[
-                { label: 'DOGE Price',       value: `$${market.dogePrice.toFixed(6)}`,        color: '#F7B731' },
+                { label: 'DOGE Price',       value: `$${market.dogePrice.toFixed(6)}`,           color: '#F7B731' },
                 { label: '24h Change',        value: `${market.priceChange24h >= 0 ? '+' : ''}${market.priceChange24h.toFixed(2)}%`, color: market.priceChange24h >= 0 ? '#00FFB2' : '#FF4555' },
-                { label: 'Network Hashrate', value: `${market.networkHashrate.toFixed(0)} TH/s`, color: '#00E5FF' },
-                { label: 'Difficulty',        value: market.difficulty.toLocaleString(),       color: '#7B61FF' },
-                { label: 'Block Height',      value: market.blockHeight.toLocaleString(),      color: '#F7B731' },
-                { label: 'Active Miners',     value: String(market.activeMiners),              color: '#00FFB2' },
+                { label: 'Network Hashrate', value: `${market.networkHashrate.toFixed(0)} TH/s`,  color: '#00E5FF' },
+                { label: 'Difficulty',        value: market.difficulty.toLocaleString(),          color: '#7B61FF' },
+                { label: 'Block Height',      value: market.blockHeight.toLocaleString(),         color: '#F7B731' },
+                { label: 'Active Miners',     value: String(market.activeMiners),                 color: '#00FFB2' },
               ].map((item) => (
                 <div key={item.label} className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
                   <p className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>{item.label}</p>
@@ -502,13 +480,213 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Confirm modal */}
+      {/* ── Edit User Modal ── */}
+      {editModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.8)' }}>
+          <div
+            className="w-full max-w-md p-6 rounded-2xl"
+            style={{ ...CARD, border: '1px solid rgba(255,255,255,0.1)', maxHeight: '90vh', overflowY: 'auto' }}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="font-bold text-base" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
+                  Edit User
+                </h3>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  @{editModal.user.username}
+                </p>
+              </div>
+              <button
+                onClick={() => setEditModal(null)}
+                className="p-1.5 rounded-lg transition-colors"
+                style={{ color: 'rgba(255,255,255,0.4)' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Balance */}
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  Balance (DOGE)
+                </label>
+                <input
+                  type="number"
+                  value={editModal.balance}
+                  onChange={(e) => setEditModal((m) => m ? { ...m, balance: e.target.value } : m)}
+                  step="0.01"
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all"
+                  style={{ ...INPUT_STYLE, fontFamily: 'var(--font-space-mono)' }}
+                  onFocus={focusGold}
+                  onBlur={blurDefault}
+                />
+              </div>
+
+              {/* Plan */}
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  Plan
+                </label>
+                <select
+                  value={editModal.plan}
+                  onChange={(e) => setEditModal((m) => m ? { ...m, plan: e.target.value } : m)}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all"
+                  style={INPUT_STYLE}
+                  onFocus={focusGold}
+                  onBlur={blurDefault}
+                >
+                  {['free', 'starter', 'pro', 'elite'].map((p) => (
+                    <option key={p} value={p} style={{ background: '#0D1117' }}>
+                      {p.charAt(0).toUpperCase() + p.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editModal.email}
+                  onChange={(e) => setEditModal((m) => m ? { ...m, email: e.target.value } : m)}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all"
+                  style={INPUT_STYLE}
+                  onFocus={focusGold}
+                  onBlur={blurDefault}
+                />
+              </div>
+
+              {/* Current password hash */}
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  Password Hash
+                </label>
+                <div className="relative">
+                  <input
+                    type={editModal.revealHash ? 'text' : 'password'}
+                    value={editModal.user.password}
+                    readOnly
+                    className="w-full px-3 py-2.5 rounded-xl text-xs outline-none pr-10"
+                    style={{
+                      ...INPUT_STYLE,
+                      fontFamily: 'var(--font-space-mono)',
+                      color: 'rgba(255,255,255,0.4)',
+                      cursor: 'default',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditModal((m) => m ? { ...m, revealHash: !m.revealHash } : m)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
+                    style={{ color: 'rgba(255,255,255,0.35)' }}
+                  >
+                    {editModal.revealHash ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+                <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                  bcrypt hash — read only. Set a new password below.
+                </p>
+              </div>
+
+              {/* New password */}
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  New Password <span style={{ color: 'rgba(255,255,255,0.3)' }}>(leave blank to keep current)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={editModal.showPassword ? 'text' : 'password'}
+                    value={editModal.newPassword}
+                    onChange={(e) => setEditModal((m) => m ? { ...m, newPassword: e.target.value } : m)}
+                    placeholder="Min. 8 characters"
+                    className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all pr-10"
+                    style={INPUT_STYLE}
+                    onFocus={focusGold}
+                    onBlur={blurDefault}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditModal((m) => m ? { ...m, showPassword: !m.showPassword } : m)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
+                    style={{ color: 'rgba(255,255,255,0.35)' }}
+                  >
+                    {editModal.showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm password */}
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  Confirm New Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={editModal.showConfirm ? 'text' : 'password'}
+                    value={editModal.confirmPassword}
+                    onChange={(e) => setEditModal((m) => m ? { ...m, confirmPassword: e.target.value } : m)}
+                    placeholder="Repeat new password"
+                    className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all pr-10"
+                    style={{
+                      ...INPUT_STYLE,
+                      border:
+                        editModal.confirmPassword && editModal.newPassword !== editModal.confirmPassword
+                          ? '1px solid rgba(255,69,85,0.4)'
+                          : '1px solid rgba(255,255,255,0.08)',
+                    }}
+                    onFocus={focusGold}
+                    onBlur={(e) => {
+                      e.currentTarget.style.border =
+                        editModal.confirmPassword && editModal.newPassword !== editModal.confirmPassword
+                          ? '1px solid rgba(255,69,85,0.4)'
+                          : '1px solid rgba(255,255,255,0.08)';
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditModal((m) => m ? { ...m, showConfirm: !m.showConfirm } : m)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
+                    style={{ color: 'rgba(255,255,255,0.35)' }}
+                  >
+                    {editModal.showConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+                {editModal.confirmPassword && editModal.newPassword !== editModal.confirmPassword && (
+                  <p className="text-xs mt-1" style={{ color: '#FF4555' }}>Passwords do not match</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={saveEdit}
+                disabled={editModal.saving}
+                className="flex-1 py-2.5 rounded-full text-sm font-bold flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 disabled:opacity-60"
+                style={{ background: '#F7B731', color: '#050810' }}
+              >
+                {editModal.saving ? <Loader2 size={14} className="animate-spin" /> : null}
+                {editModal.saving ? 'Saving…' : 'Save Changes'}
+              </button>
+              <button
+                onClick={() => setEditModal(null)}
+                className="flex-1 py-2.5 rounded-full text-sm font-bold transition-all"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm withdrawal modal */}
       {confirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
-          <div
-            className="w-full max-w-sm p-6 rounded-2xl"
-            style={{ ...CARD, border: '1px solid rgba(255,255,255,0.1)' }}
-          >
+          <div className="w-full max-w-sm p-6 rounded-2xl" style={{ ...CARD, border: '1px solid rgba(255,255,255,0.1)' }}>
             <h3 className="font-bold text-base mb-2" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
               {confirmModal.action === 'approve' ? 'Approve' : 'Reject'} Withdrawal?
             </h3>
@@ -534,11 +712,7 @@ export default function AdminPage() {
               <button
                 onClick={() => setConfirmModal(null)}
                 className="flex-1 py-2.5 rounded-full text-sm font-bold transition-all"
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  color: 'rgba(255,255,255,0.6)',
-                }}
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
               >
                 Cancel
               </button>
@@ -547,5 +721,109 @@ export default function AdminPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// ── Extracted row component to keep the eye-toggle state local ────────────────
+function UserRow({ user, planColor, onEdit }: { user: User; planColor: string; onEdit: () => void }) {
+  const [revealPw, setRevealPw] = useState(false);
+
+  return (
+    <tr
+      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+      className="transition-colors"
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(247,183,49,0.03)')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+    >
+      {/* User */}
+      <td className="py-3 px-3">
+        <div className="flex items-center gap-2">
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+            style={{ background: `${planColor}18`, color: planColor }}
+          >
+            {user.username.slice(0, 2).toUpperCase()}
+          </div>
+          <p className="font-medium text-xs">{user.username}</p>
+        </div>
+      </td>
+      {/* Email */}
+      <td className="py-3 px-3">
+        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-space-mono)' }}>{user.email}</p>
+      </td>
+      {/* Password hash */}
+      <td className="py-3 px-3">
+        <div className="flex items-center gap-1.5">
+          <span
+            className="text-xs"
+            style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-space-mono)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}
+          >
+            {revealPw ? user.password : '••••••••••••'}
+          </span>
+          <button
+            onClick={() => setRevealPw((v) => !v)}
+            className="flex-shrink-0 p-0.5"
+            style={{ color: 'rgba(255,255,255,0.3)' }}
+          >
+            {revealPw ? <EyeOff size={12} /> : <Eye size={12} />}
+          </button>
+        </div>
+      </td>
+      {/* Plan */}
+      <td className="py-3 px-3">
+        <span
+          className="px-2 py-0.5 rounded text-xs font-bold uppercase"
+          style={{ background: `${planColor}18`, color: planColor, fontFamily: 'var(--font-space-grotesk)' }}
+        >
+          {user.plan}
+        </span>
+      </td>
+      {/* Balance */}
+      <td className="py-3 px-3">
+        <span className="text-xs" style={{ fontFamily: 'var(--font-space-mono)' }}>{user.balance.toFixed(2)}</span>
+      </td>
+      {/* Mining status */}
+      <td className="py-3 px-3">
+        <div className="flex items-center gap-1.5">
+          <span
+            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{
+              background: user.miningActive ? '#00FFB2' : 'rgba(255,255,255,0.2)',
+              boxShadow: user.miningActive ? '0 0 4px #00FFB2' : 'none',
+            }}
+          />
+          <span className="text-xs" style={{ color: user.miningActive ? '#00FFB2' : 'rgba(255,255,255,0.4)' }}>
+            {user.miningActive ? 'Mining' : 'Paused'}
+          </span>
+        </div>
+      </td>
+      {/* Verified */}
+      <td className="py-3 px-3">
+        <span
+          className="text-xs px-1.5 py-0.5 rounded"
+          style={
+            user.isVerified ?? true
+              ? { background: 'rgba(0,255,178,0.1)', color: '#00FFB2' }
+              : { background: 'rgba(255,69,85,0.1)', color: '#FF4555' }
+          }
+        >
+          {user.isVerified ?? true ? 'Yes' : 'No'}
+        </span>
+      </td>
+      {/* Joined */}
+      <td className="py-3 px-3">
+        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{timeAgo(user.createdAt)}</span>
+      </td>
+      {/* Edit */}
+      <td className="py-3 px-3">
+        <button
+          onClick={onEdit}
+          className="p-1.5 rounded-lg transition-all hover:-translate-y-0.5"
+          style={{ color: '#F7B731', background: 'rgba(247,183,49,0.08)' }}
+        >
+          <Edit2 size={13} />
+        </button>
+      </td>
+    </tr>
   );
 }

@@ -170,13 +170,13 @@ export default function LoginPage() {
                 <label className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>
                   Password
                 </label>
-                <a
-                  href="#"
+                <Link
+                  href="/forgot-password"
                   className="text-xs hover:opacity-80 transition-opacity"
                   style={{ color: '#F7B731' }}
                 >
                   Forgot password?
-                </a>
+                </Link>
               </div>
               <div className="relative">
                 <input

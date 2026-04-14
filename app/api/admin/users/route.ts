@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import bcrypt from 'bcryptjs'
 import { auth } from '@/lib/auth'
 import { convex } from '@/lib/convex'
 import { api } from '@/convex/_generated/api'
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
   const search = searchParams.get('search') ?? undefined
 
-  const users = await convex.query(api.users.getAllUsers, { search })
+  const users = await convex.query(api.users.adminGetAllUsers, { search })
   return Response.json({ users })
 }
 
@@ -24,20 +25,60 @@ export async function PATCH(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { userId, balance, plan } = body as { userId: string; balance?: number; plan?: string }
+  const { userId, balance, plan, email, newPassword } = body as {
+    userId: string
+    balance?: number
+    plan?: string
+    email?: string
+    newPassword?: string
+  }
 
   if (!userId) {
     return Response.json({ error: 'userId required' }, { status: 400 })
   }
 
-  const fields: Record<string, unknown> = {}
-  if (balance !== undefined) fields.balance = balance
-  if (plan !== undefined) fields.plan = plan
+  // Handle balance / plan update via updateUser
+  if (balance !== undefined || plan !== undefined) {
+    const fields: Record<string, unknown> = {}
+    if (balance !== undefined) fields.balance = balance
+    if (plan !== undefined) fields.plan = plan
 
-  await convex.mutation(api.users.updateUser, {
-    id: userId as Id<'users'>,
-    fields,
-  })
+    await convex.mutation(api.users.updateUser, {
+      id: userId as Id<'users'>,
+      fields,
+    })
+  }
+
+  // Handle credential updates via updateUserCredentials
+  if (email !== undefined || newPassword !== undefined) {
+    const credFields: { email?: string; password?: string } = {}
+
+    if (email !== undefined) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return Response.json({ error: 'Invalid email address' }, { status: 400 })
+      }
+      // Check email not already taken by another user
+      const existing = await convex.query(api.users.getUserByEmail, {
+        email: email.toLowerCase(),
+      })
+      if (existing && existing._id !== userId) {
+        return Response.json({ error: 'Email already in use' }, { status: 409 })
+      }
+      credFields.email = email.toLowerCase()
+    }
+
+    if (newPassword !== undefined) {
+      if (newPassword.length < 8) {
+        return Response.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
+      }
+      credFields.password = await bcrypt.hash(newPassword, 10)
+    }
+
+    await convex.mutation(api.users.updateUserCredentials, {
+      id: userId as Id<'users'>,
+      ...credFields,
+    })
+  }
 
   const user = await convex.query(api.users.getUserById, { id: userId as Id<'users'> })
   if (!user) return Response.json({ error: 'User not found' }, { status: 404 })

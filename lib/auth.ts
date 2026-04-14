@@ -30,6 +30,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.username,
           isAdmin: user.isAdmin,
           plan: user.plan,
+          // Pre-existing users have no isVerified field — treat as verified
+          isVerified: user.isVerified ?? true,
         }
       },
     }),

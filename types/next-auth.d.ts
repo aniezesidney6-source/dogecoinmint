@@ -6,6 +6,7 @@ declare module 'next-auth' {
       id: string;
       isAdmin: boolean;
       plan: string;
+      isVerified: boolean;
     } & DefaultSession['user'];
   }
 
@@ -13,6 +14,7 @@ declare module 'next-auth' {
     id: string;
     isAdmin: boolean;
     plan: string;
+    isVerified: boolean;
   }
 }
 
@@ -21,5 +23,6 @@ declare module 'next-auth/jwt' {
     id: string;
     isAdmin: boolean;
     plan: string;
+    isVerified: boolean;
   }
 }

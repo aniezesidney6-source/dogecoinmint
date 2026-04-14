@@ -17,6 +17,13 @@ export default defineSchema({
     miningActive: v.boolean(),
     lastMined: v.optional(v.number()),
     createdAt: v.number(),
+    // Email verification
+    isVerified: v.optional(v.boolean()),
+    verificationCode: v.optional(v.string()),
+    verificationExpiry: v.optional(v.number()),
+    // Password reset
+    resetToken: v.optional(v.string()),
+    resetTokenExpiry: v.optional(v.number()),
   })
     .index('by_email', ['email'])
     .index('by_referralCode', ['referralCode'])
