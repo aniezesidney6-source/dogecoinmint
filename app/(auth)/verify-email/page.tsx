@@ -258,9 +258,9 @@ function VerifyEmailContent() {
 
               <p className="text-center text-sm mt-4" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 Wrong account?{' '}
-                <Link href="/login" className="hover:opacity-80 transition-opacity" style={{ color: '#F7B731' }}>
+                <a href="/login" className="hover:opacity-80 transition-opacity" style={{ color: '#F7B731' }}>
                   Sign in with a different account
-                </Link>
+                </a>
               </p>
             </>
           )}
