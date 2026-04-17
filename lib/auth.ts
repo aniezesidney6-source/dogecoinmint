@@ -36,7 +36,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.username,
           isAdmin: user.isAdmin,
           plan: user.plan,
-          isVerified: user.isVerified ?? true,
           isFrozen: user.status === 'frozen',
         }
       },

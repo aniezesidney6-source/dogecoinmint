@@ -129,8 +129,8 @@ function SignupForm() {
         toast(data.error ?? 'Signup failed', 'error');
         return;
       }
-      toast('Account created! Check your email for a verification code 📧', 'success');
-      router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
+      toast('Account created! Welcome to DogecoinMint 🎉', 'success');
+      router.push('/dashboard');
     } catch (err) {
       console.error('Signup fetch error:', err);
       toast('Network error — please try again', 'error');

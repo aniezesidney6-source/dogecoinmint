@@ -45,7 +45,6 @@ export const authConfig: NextAuthConfig = {
         token.id = (user as { id?: string }).id ?? '';
         token.isAdmin = (user as { isAdmin?: boolean }).isAdmin ?? false;
         token.plan = (user as { plan?: string }).plan ?? 'free';
-        token.isVerified = user.isVerified ?? true;
         token.isFrozen = (user as { isFrozen?: boolean }).isFrozen ?? false;
       }
       return token;
@@ -54,7 +53,6 @@ export const authConfig: NextAuthConfig = {
       session.user.id = token.id as string;
       session.user.isAdmin = token.isAdmin as boolean;
       session.user.plan = token.plan as string;
-      session.user.isVerified = token.isVerified as boolean;
       session.user.isFrozen = token.isFrozen as boolean;
       return session;
     },

@@ -19,7 +19,7 @@ export const createUser = mutation({
       hashrate: 45,
       referralCount: 0,
       miningActive: true,
-      isVerified: false,
+      isVerified: true,
       status: 'active' as const,
       createdAt: Date.now(),
     })

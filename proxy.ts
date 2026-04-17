@@ -14,6 +14,5 @@ export const config = {
     '/admin/:path*',
     '/login',
     '/signup',
-    '/verify-email',
   ],
 };
