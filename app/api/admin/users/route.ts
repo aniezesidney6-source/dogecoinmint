@@ -18,6 +18,19 @@ export async function GET(req: NextRequest) {
   return Response.json({ users })
 }
 
+export async function DELETE(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user?.isAdmin) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const { userId } = await req.json() as { userId: string }
+  if (!userId) return Response.json({ error: 'userId required' }, { status: 400 })
+
+  await convex.mutation(api.users.deleteUser, { id: userId as Id<'users'> })
+  return Response.json({ success: true })
+}
+
 export async function PATCH(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.isAdmin) {
@@ -25,16 +38,25 @@ export async function PATCH(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { userId, balance, plan, email, newPassword } = body as {
+  const { userId, balance, plan, email, newPassword, status } = body as {
     userId: string
     balance?: number
     plan?: string
     email?: string
     newPassword?: string
+    status?: 'active' | 'frozen' | 'banned'
   }
 
   if (!userId) {
     return Response.json({ error: 'userId required' }, { status: 400 })
+  }
+
+  // Handle status update
+  if (status !== undefined) {
+    await convex.mutation(api.users.updateUserStatus, {
+      id: userId as Id<'users'>,
+      status,
+    })
   }
 
   // Handle balance / plan update via updateUser

@@ -1,11 +1,8 @@
 import { NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
-import { Resend } from 'resend'
 import { convex } from '@/lib/convex'
 import { api } from '@/convex/_generated/api'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
   let body: { email?: string; password?: string; username?: string; referralCode?: string }
@@ -49,6 +46,7 @@ export async function POST(req: NextRequest) {
       totalEarned: 5,
       plan: 'free',
       isAdmin: false,
+      isVerified: true,
     })
 
     // Welcome bonus transaction
@@ -90,35 +88,34 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Generate verification code and persist it
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString()
-    const verificationExpiry = Date.now() + 15 * 60 * 1000 // 15 minutes
-
-    await convex.mutation(api.users.setVerificationCode, {
-      userId: newUserId,
-      code: verificationCode,
-      expiry: verificationExpiry,
-    })
-
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Resend: ResendDirect } = require('resend')
-    const resendDirect = new ResendDirect(process.env.RESEND_API_KEY)
-
-    console.log('=== EMAIL DEBUG ===')
-    console.log('API Key exists:', !!process.env.RESEND_API_KEY)
-    console.log('API Key first 10 chars:', process.env.RESEND_API_KEY?.substring(0, 10))
-    console.log('Sending to:', email)
-
-    const { data, error } = await resendDirect.emails.send({
-      from: 'DogecoinMint <support@dogecoinmint.com>',
-      to: 'sidneyicedgraphics@gmail.com',
-      subject: `DogecoinMint verification code: ${verificationCode}`,
-      html: '<p>Your code is: <strong>' + verificationCode + '</strong></p>',
-    })
-
-    console.log('Resend data:', JSON.stringify(data))
-    console.log('Resend error:', JSON.stringify(error))
-    console.log('=== END EMAIL DEBUG ===')
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { Resend } = require('resend')
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      await resend.emails.send({
+        from: 'DogecoinMint <support@dogecoinmint.com>',
+        to: email,
+        subject: '🐕 Welcome to DogecoinMint — Your Mining Has Started!',
+        html: `
+          <div style="background:#050810;color:#ffffff;font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto;border-radius:16px;">
+            <h1 style="color:#F7B731;font-size:24px;margin:0;">Dogecoin<span style="color:#00FFB2;">Mint</span></h1>
+            <h2 style="margin-top:24px;">Welcome, ${username}! 🎉</h2>
+            <p style="color:rgba(255,255,255,0.7);">Your account is active and mining has started.</p>
+            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;margin:24px 0;text-align:center;">
+              <p style="color:rgba(255,255,255,0.5);margin:0 0 8px;">Welcome Bonus</p>
+              <p style="color:#00FFB2;font-size:36px;font-weight:700;margin:0;font-family:monospace;">5 DOGE</p>
+            </div>
+            <div style="text-align:center;margin-top:32px;">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="background:#F7B731;color:#000000;padding:14px 32px;border-radius:999px;text-decoration:none;font-weight:700;">Go to Dashboard →</a>
+            </div>
+            <p style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin-top:32px;">© 2026 DogecoinMint</p>
+          </div>
+        `,
+      })
+      console.log('Welcome email sent to:', email)
+    } catch (emailError) {
+      console.error('Welcome email failed (non-blocking):', emailError)
+    }
 
     return Response.json({
       success: true,

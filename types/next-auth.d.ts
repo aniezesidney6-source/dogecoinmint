@@ -7,6 +7,7 @@ declare module 'next-auth' {
       isAdmin: boolean;
       plan: string;
       isVerified: boolean;
+      isFrozen: boolean;
     } & DefaultSession['user'];
   }
 
@@ -15,6 +16,7 @@ declare module 'next-auth' {
     isAdmin: boolean;
     plan: string;
     isVerified: boolean;
+    isFrozen: boolean;
   }
 }
 
@@ -24,5 +26,6 @@ declare module 'next-auth/jwt' {
     isAdmin: boolean;
     plan: string;
     isVerified: boolean;
+    isFrozen: boolean;
   }
 }

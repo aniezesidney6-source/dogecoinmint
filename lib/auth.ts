@@ -1,9 +1,13 @@
-import NextAuth from 'next-auth'
+import NextAuth, { CredentialsSignin } from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { convex } from './convex'
 import { api } from '@/convex/_generated/api'
 import { authConfig } from './auth.config'
+
+class AccountBannedError extends CredentialsSignin {
+  code = 'AccountBanned'
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -21,6 +25,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         })
         if (!user) return null
 
+        if (user.status === 'banned') throw new AccountBannedError()
+
         const valid = await bcrypt.compare(String(credentials.password), user.password)
         if (!valid) return null
 
@@ -30,8 +36,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.username,
           isAdmin: user.isAdmin,
           plan: user.plan,
-          // Pre-existing users have no isVerified field — treat as verified
           isVerified: user.isVerified ?? true,
+          isFrozen: user.status === 'frozen',
         }
       },
     }),

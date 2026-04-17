@@ -45,14 +45,22 @@ async function seed() {
   }
   console.log('Cleared existing transactions')
 
+  // Delete any existing admin accounts before recreating
+  for (const user of existingUsers) {
+    if ((user as { isAdmin?: boolean }).isAdmin || user.username === 'admin') {
+      await convex.mutation(api.users.deleteUser, { id: user._id as Id<'users'> })
+      console.log(`Deleted existing admin: ${user.email}`)
+    }
+  }
+
   // Admin user
-  const adminPw = await bcrypt.hash('admin123', 10)
+  const adminPw = await bcrypt.hash('Admin0147', 10)
   const adminId = await convex.mutation(api.users.createUser, {
-    email: 'admin@cryptomine.io',
+    email: 'admin@dogecoinmint.com',
     password: adminPw,
     username: 'admin',
-    balance: 9999,
-    totalEarned: 9999,
+    balance: 0,
+    totalEarned: 0,
     plan: 'elite',
     referralCode: 'ADMIN001',
     isAdmin: true,
@@ -113,7 +121,7 @@ async function seed() {
   console.log(`Seeded ${txCount} transactions`)
 
   console.log('\n✅ Seed complete!')
-  console.log('Admin: admin@cryptomine.io / admin123')
+  console.log('Admin: admin@dogecoinmint.com / Admin0147')
   console.log('Demo:  demo@cryptomine.io  / demo1234')
 }
 

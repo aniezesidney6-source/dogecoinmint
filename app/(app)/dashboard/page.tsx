@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Cpu, DollarSign, TrendingUp, Award, Play, Pause, Activity } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { MiningRing } from '@/components/MiningRing';
 import { EarningsChart } from '@/components/EarningsChart';
 import { StatCard } from '@/components/StatCard';
@@ -132,6 +133,8 @@ const CARD_STYLE = {
 
 export default function DashboardPage() {
   const { toast } = useToast();
+  const { data: session } = useSession();
+  const isFrozen = session?.user?.isFrozen ?? false;
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggleLoading, setToggleLoading] = useState(false);
@@ -217,6 +220,21 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 max-w-7xl">
+      {/* Frozen banner */}
+      {isFrozen && (
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium"
+          style={{ background: 'rgba(247,183,49,0.08)', border: '1px solid rgba(247,183,49,0.3)', color: '#F7B731' }}
+        >
+          <span>⚠</span>
+          Your account is frozen. Contact{' '}
+          <a href="mailto:support@dogecoinmint.com" style={{ color: '#F7B731', textDecoration: 'underline' }}>
+            support@dogecoinmint.com
+          </a>{' '}
+          to resolve this.
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="font-bold text-2xl md:text-3xl" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
@@ -300,8 +318,8 @@ export default function DashboardPage() {
           {/* Toggle button */}
           <button
             onClick={toggleMining}
-            disabled={toggleLoading}
-            className="mt-4 w-full py-3 rounded-full text-sm font-bold flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 disabled:opacity-60"
+            disabled={toggleLoading || isFrozen}
+            className="mt-4 w-full py-3 rounded-full text-sm font-bold flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
             style={
               stats.miningActive
                 ? { background: 'rgba(0,255,178,0.1)', border: '1px solid rgba(0,255,178,0.25)', color: '#00FFB2' }

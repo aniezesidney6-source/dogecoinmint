@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Search, Check, X, Edit2, RefreshCw, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Search, Check, X, Edit2, RefreshCw, Loader2, Eye, EyeOff, MoreHorizontal } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
 
 interface User {
@@ -19,6 +19,7 @@ interface User {
   createdAt: string;
   isAdmin: boolean;
   isVerified?: boolean;
+  status?: 'active' | 'frozen' | 'banned';
 }
 
 interface Withdrawal {
@@ -116,6 +117,8 @@ export default function AdminPage() {
   const [wLoading, setWLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmModal, setConfirmModal] = useState<{ id: string; action: 'approve' | 'reject' } | null>(null);
+  const [deleteModal, setDeleteModal] = useState<User | null>(null);
+  const [userActionLoading, setUserActionLoading] = useState<string | null>(null);
 
   const [market, setMarket] = useState<MarketData | null>(null);
   const [mktLoading, setMktLoading] = useState(false);
@@ -219,6 +222,48 @@ export default function AdminPage() {
     }
   }
 
+  async function handleStatusUpdate(userId: string, status: 'active' | 'frozen' | 'banned') {
+    setUserActionLoading(userId);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, status }),
+      });
+      if (res.ok) {
+        const label = status === 'frozen' ? 'frozen' : status === 'banned' ? 'banned' : 'unfrozen/unbanned';
+        toast(`Account ${label}`, 'success');
+        loadUsers();
+      } else {
+        toast('Action failed', 'error');
+      }
+    } catch {
+      toast('Action failed', 'error');
+    }
+    setUserActionLoading(null);
+  }
+
+  async function handleDeleteUser(userId: string) {
+    setUserActionLoading(userId);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      if (res.ok) {
+        toast('User deleted', 'success');
+        setDeleteModal(null);
+        loadUsers();
+      } else {
+        toast('Delete failed', 'error');
+      }
+    } catch {
+      toast('Delete failed', 'error');
+    }
+    setUserActionLoading(null);
+  }
+
   async function handleWithdrawalAction() {
     if (!confirmModal) return;
     setActionLoading(confirmModal.id);
@@ -311,7 +356,7 @@ export default function AdminPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    {['User', 'Email', 'Password', 'Plan', 'Balance', 'Status', 'Verified', 'Joined', 'Edit'].map((h) => (
+                    {['User', 'Email', 'Password', 'Plan', 'Balance', 'Mining', 'Account', 'Verified', 'Joined', 'Actions'].map((h) => (
                       <th key={h} className="text-left py-3 px-3 text-xs font-medium whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.4)' }}>{h}</th>
                     ))}
                   </tr>
@@ -324,7 +369,10 @@ export default function AdminPage() {
                         key={u._id}
                         user={u}
                         planColor={pc}
+                        actionLoading={userActionLoading === u._id}
                         onEdit={() => openEdit(u)}
+                        onStatusUpdate={(status) => handleStatusUpdate(u._id, status)}
+                        onDelete={() => setDeleteModal(u)}
                       />
                     );
                   })}
@@ -683,6 +731,40 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* Delete user modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.8)' }}>
+          <div className="w-full max-w-sm p-6 rounded-2xl" style={{ ...CARD, border: '1px solid rgba(255,69,85,0.2)' }}>
+            <h3 className="font-bold text-base mb-2" style={{ fontFamily: 'var(--font-space-grotesk)' }}>
+              Delete Account?
+            </h3>
+            <p className="text-sm mb-5" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Are you sure you want to permanently delete{' '}
+              <strong style={{ color: '#ffffff' }}>@{deleteModal.username}</strong>?
+              This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleDeleteUser(deleteModal._id)}
+                disabled={userActionLoading === deleteModal._id}
+                className="flex-1 py-2.5 rounded-full text-sm font-bold flex items-center justify-center gap-2 transition-all"
+                style={{ background: '#FF4555', color: '#ffffff' }}
+              >
+                {userActionLoading === deleteModal._id ? <Loader2 size={14} className="animate-spin" /> : null}
+                Delete
+              </button>
+              <button
+                onClick={() => setDeleteModal(null)}
+                className="flex-1 py-2.5 rounded-full text-sm font-bold transition-all"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirm withdrawal modal */}
       {confirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
@@ -724,9 +806,45 @@ export default function AdminPage() {
   );
 }
 
+function accountStatusBadge(status?: 'active' | 'frozen' | 'banned') {
+  if (status === 'frozen') return { dot: '#FFB347', label: 'Frozen', bg: 'rgba(255,179,71,0.1)', color: '#FFB347' };
+  if (status === 'banned') return { dot: '#FF4555', label: 'Banned', bg: 'rgba(255,69,85,0.1)', color: '#FF4555' };
+  return { dot: '#00FFB2', label: 'Active', bg: 'rgba(0,255,178,0.1)', color: '#00FFB2' };
+}
+
 // ── Extracted row component to keep the eye-toggle state local ────────────────
-function UserRow({ user, planColor, onEdit }: { user: User; planColor: string; onEdit: () => void }) {
+function UserRow({
+  user,
+  planColor,
+  actionLoading,
+  onEdit,
+  onStatusUpdate,
+  onDelete,
+}: {
+  user: User;
+  planColor: string;
+  actionLoading: boolean;
+  onEdit: () => void;
+  onStatusUpdate: (status: 'active' | 'frozen' | 'banned') => void;
+  onDelete: () => void;
+}) {
   const [revealPw, setRevealPw] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [dropdownOpen]);
+
+  const acct = accountStatusBadge(user.status);
+  const isFrozen = user.status === 'frozen';
+  const isBanned = user.status === 'banned';
 
   return (
     <tr
@@ -797,6 +915,18 @@ function UserRow({ user, planColor, onEdit }: { user: User; planColor: string; o
           </span>
         </div>
       </td>
+      {/* Account status */}
+      <td className="py-3 px-3">
+        <div className="flex items-center gap-1.5">
+          <span
+            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{ background: acct.dot, boxShadow: `0 0 4px ${acct.dot}` }}
+          />
+          <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: acct.bg, color: acct.color }}>
+            {acct.label}
+          </span>
+        </div>
+      </td>
       {/* Verified */}
       <td className="py-3 px-3">
         <span
@@ -814,15 +944,67 @@ function UserRow({ user, planColor, onEdit }: { user: User; planColor: string; o
       <td className="py-3 px-3">
         <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{timeAgo(user.createdAt)}</span>
       </td>
-      {/* Edit */}
+      {/* Actions */}
       <td className="py-3 px-3">
-        <button
-          onClick={onEdit}
-          className="p-1.5 rounded-lg transition-all hover:-translate-y-0.5"
-          style={{ color: '#F7B731', background: 'rgba(247,183,49,0.08)' }}
-        >
-          <Edit2 size={13} />
-        </button>
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setDropdownOpen((v) => !v)}
+            disabled={actionLoading}
+            className="p-1.5 rounded-lg transition-all hover:-translate-y-0.5 disabled:opacity-50"
+            style={{ color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.06)' }}
+          >
+            {actionLoading ? <Loader2 size={13} className="animate-spin" /> : <MoreHorizontal size={13} />}
+          </button>
+          {dropdownOpen && (
+            <div
+              className="absolute right-0 z-50 mt-1 py-1 rounded-xl text-xs font-medium shadow-xl"
+              style={{
+                background: '#0D1117',
+                border: '1px solid rgba(255,255,255,0.1)',
+                minWidth: 140,
+                top: '100%',
+              }}
+            >
+              <button
+                onClick={() => { onEdit(); setDropdownOpen(false); }}
+                className="w-full text-left px-3 py-2 flex items-center gap-2 transition-colors"
+                style={{ color: '#F7B731' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(247,183,49,0.08)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <Edit2 size={12} /> Edit User
+              </button>
+              <button
+                onClick={() => { onStatusUpdate(isFrozen ? 'active' : 'frozen'); setDropdownOpen(false); }}
+                className="w-full text-left px-3 py-2 flex items-center gap-2 transition-colors"
+                style={{ color: isFrozen ? '#00FFB2' : '#FFB347' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = isFrozen ? 'rgba(0,255,178,0.06)' : 'rgba(255,179,71,0.06)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <span>{isFrozen ? '❄ Unfreeze' : '❄ Freeze'}</span>
+              </button>
+              <button
+                onClick={() => { onStatusUpdate(isBanned ? 'active' : 'banned'); setDropdownOpen(false); }}
+                className="w-full text-left px-3 py-2 flex items-center gap-2 transition-colors"
+                style={{ color: isBanned ? '#00FFB2' : '#FF4555' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = isBanned ? 'rgba(0,255,178,0.06)' : 'rgba(255,69,85,0.06)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <span>{isBanned ? '✓ Unban' : '🚫 Ban'}</span>
+              </button>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '4px 0' }} />
+              <button
+                onClick={() => { onDelete(); setDropdownOpen(false); }}
+                className="w-full text-left px-3 py-2 flex items-center gap-2 transition-colors"
+                style={{ color: '#FF4555' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,69,85,0.06)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <X size={12} /> Delete
+              </button>
+            </div>
+          )}
+        </div>
       </td>
     </tr>
   );

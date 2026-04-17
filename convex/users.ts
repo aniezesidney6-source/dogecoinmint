@@ -20,6 +20,7 @@ export const createUser = mutation({
       referralCount: 0,
       miningActive: true,
       isVerified: false,
+      status: 'active' as const,
       createdAt: Date.now(),
     })
   },
@@ -115,6 +116,37 @@ export const getUserByUsername = query({
   handler: async (ctx, args) => {
     const all = await ctx.db.query('users').collect()
     return all.find((u) => u.username === args.username) ?? null
+  },
+})
+
+// ─── Account management ──────────────────────────────────────────────────────
+
+export const deleteUser = mutation({
+  args: { id: v.id('users') },
+  handler: async (ctx, args) => {
+    const txns = await ctx.db
+      .query('transactions')
+      .withIndex('by_userId', (q) => q.eq('userId', args.id))
+      .collect()
+    for (const txn of txns) await ctx.db.delete(txn._id)
+
+    const withdrawals = await ctx.db
+      .query('withdrawals')
+      .withIndex('by_userId', (q) => q.eq('userId', args.id))
+      .collect()
+    for (const w of withdrawals) await ctx.db.delete(w._id)
+
+    await ctx.db.delete(args.id)
+  },
+})
+
+export const updateUserStatus = mutation({
+  args: {
+    id: v.id('users'),
+    status: v.union(v.literal('active'), v.literal('frozen'), v.literal('banned')),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { status: args.status })
   },
 })
 

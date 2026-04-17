@@ -91,7 +91,11 @@ export default function LoginPage() {
     try {
       const result = await signIn('credentials', { email, password, redirect: false });
       if (result?.error) {
-        toast('Invalid email or password', 'error');
+        if ((result as { code?: string }).code === 'AccountBanned') {
+          toast('Your account has been banned. Contact support@dogecoinmint.com', 'error');
+        } else {
+          toast('Invalid email or password', 'error');
+        }
       } else {
         toast('Welcome back!', 'success');
         router.push('/dashboard');

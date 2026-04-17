@@ -17,6 +17,8 @@ export default defineSchema({
     miningActive: v.boolean(),
     lastMined: v.optional(v.number()),
     createdAt: v.number(),
+    // Account status
+    status: v.optional(v.union(v.literal('active'), v.literal('frozen'), v.literal('banned'))),
     // Email verification
     isVerified: v.optional(v.boolean()),
     verificationCode: v.optional(v.string()),
