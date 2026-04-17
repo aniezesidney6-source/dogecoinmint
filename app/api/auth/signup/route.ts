@@ -1,9 +1,11 @@
 import { NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
+import { Resend } from 'resend'
 import { convex } from '@/lib/convex'
 import { api } from '@/convex/_generated/api'
-import { sendWelcomeEmail, sendVerificationEmail } from '@/lib/email'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
   let body: { email?: string; password?: string; username?: string; referralCode?: string }
@@ -36,13 +38,13 @@ export async function POST(req: NextRequest) {
     }
 
     const hashed = await bcrypt.hash(password, 10)
-    const code = nanoid(8)
+    const referralCode = nanoid(8)
 
     const newUserId = await convex.mutation(api.users.createUser, {
       email: email.toLowerCase(),
       password: hashed,
       username,
-      referralCode: code,
+      referralCode,
       balance: 5,
       totalEarned: 5,
       plan: 'free',
@@ -58,7 +60,7 @@ export async function POST(req: NextRequest) {
       status: 'completed',
     })
 
-    // Handle referral
+    // Handle referral (non-blocking — failure must not prevent account creation)
     if (refParam) {
       try {
         const referrer = await convex.query(api.users.getUserByReferralCode, { code: refParam })
@@ -88,9 +90,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Send verification code
+    // Generate verification code and persist it
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString()
-    const verificationExpiry = Date.now() + 15 * 60 * 1000
+    const verificationExpiry = Date.now() + 15 * 60 * 1000 // 15 minutes
 
     await convex.mutation(api.users.setVerificationCode, {
       userId: newUserId,
@@ -98,17 +100,25 @@ export async function POST(req: NextRequest) {
       expiry: verificationExpiry,
     })
 
-    console.log('Sending welcome email to:', email)
-    sendWelcomeEmail(email.toLowerCase(), username).catch((e) =>
-      console.error('Welcome email failed:', e)
-    )
-    console.log('Welcome email sent')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Resend: ResendDirect } = require('resend')
+    const resendDirect = new ResendDirect(process.env.RESEND_API_KEY)
 
-    console.log('Sending verification code to:', email)
-    sendVerificationEmail(email.toLowerCase(), username, verificationCode).catch((e) =>
-      console.error('Verification email failed:', e)
-    )
-    console.log('Verification code sent')
+    console.log('=== EMAIL DEBUG ===')
+    console.log('API Key exists:', !!process.env.RESEND_API_KEY)
+    console.log('API Key first 10 chars:', process.env.RESEND_API_KEY?.substring(0, 10))
+    console.log('Sending to:', email)
+
+    const { data, error } = await resendDirect.emails.send({
+      from: 'DogecoinMint <support@dogecoinmint.com>',
+      to: 'sidneyicedgraphics@gmail.com',
+      subject: `DogecoinMint verification code: ${verificationCode}`,
+      html: '<p>Your code is: <strong>' + verificationCode + '</strong></p>',
+    })
+
+    console.log('Resend data:', JSON.stringify(data))
+    console.log('Resend error:', JSON.stringify(error))
+    console.log('=== END EMAIL DEBUG ===')
 
     return Response.json({
       success: true,
@@ -116,7 +126,7 @@ export async function POST(req: NextRequest) {
         id: newUserId,
         email: email.toLowerCase(),
         username,
-        referralCode: code,
+        referralCode,
       },
     })
   } catch (err) {

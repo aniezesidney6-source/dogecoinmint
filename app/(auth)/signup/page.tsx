@@ -99,7 +99,9 @@ function SignupForm() {
   }
 
   async function handleSubmit(e: React.FormEvent) {
+    console.log('Submit clicked');
     e.preventDefault();
+    console.log('Form submitted, calling signup...');
     if (form.password !== form.confirmPassword) {
       toast('Passwords do not match', 'error');
       return;
@@ -120,15 +122,18 @@ function SignupForm() {
           referralCode: form.referralCode || undefined,
         }),
       });
+      console.log('Signup response status:', res.status);
       const data = await res.json();
+      console.log('Signup response data:', data);
       if (!res.ok) {
         toast(data.error ?? 'Signup failed', 'error');
         return;
       }
-      toast('Account created! You received 5 DOGE welcome bonus 🎉', 'success');
-      const { signIn } = await import('next-auth/react');
-      await signIn('credentials', { email: form.email, password: form.password, redirect: false });
-      router.push('/dashboard');
+      toast('Account created! Check your email for a verification code 📧', 'success');
+      router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
+    } catch (err) {
+      console.error('Signup fetch error:', err);
+      toast('Network error — please try again', 'error');
     } finally {
       setLoading(false);
     }
@@ -330,9 +335,9 @@ function SignupForm() {
               />
               <label htmlFor="terms" className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
                 I agree to the{' '}
-                <a href="#" className="hover:opacity-80 transition-opacity" style={{ color: '#F7B731' }}>Terms of Service</a>
+                <a href="/terms" className="hover:opacity-80 transition-opacity" style={{ color: '#F7B731' }}>Terms of Service</a>
                 {' '}and{' '}
-                <a href="#" className="hover:opacity-80 transition-opacity" style={{ color: '#F7B731' }}>Privacy Policy</a>
+                <a href="/privacy" className="hover:opacity-80 transition-opacity" style={{ color: '#F7B731' }}>Privacy Policy</a>
               </label>
             </div>
 

@@ -7,7 +7,7 @@ function getResend(): Resend {
   return _resend
 }
 
-const FROM = process.env.RESEND_FROM_EMAIL ?? 'DogecoinMint <noreply@dogecoinmint.com>'
+const FROM = 'DogecoinMint <support@dogecoinmint.com>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
 // ─── Shared HTML helpers ──────────────────────────────────────────────────────
