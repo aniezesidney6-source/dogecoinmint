@@ -23,10 +23,6 @@ export async function POST(req: NextRequest) {
       return Response.json({ success: true })
     }
 
-    if (user.isVerified) {
-      return Response.json({ error: 'Email already verified' }, { status: 400 })
-    }
-
     const code = Math.floor(100000 + Math.random() * 900000).toString()
     const expiry = Date.now() + 15 * 60 * 1000 // 15 minutes
 

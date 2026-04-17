@@ -18,7 +18,6 @@ interface User {
   referralCount: number;
   createdAt: string;
   isAdmin: boolean;
-  isVerified?: boolean;
   status?: 'active' | 'frozen' | 'banned';
 }
 
@@ -356,7 +355,7 @@ export default function AdminPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    {['User', 'Email', 'Password', 'Plan', 'Balance', 'Mining', 'Account', 'Verified', 'Joined', 'Actions'].map((h) => (
+                    {['User', 'Email', 'Password', 'Plan', 'Balance', 'Mining', 'Account', 'Joined', 'Actions'].map((h) => (
                       <th key={h} className="text-left py-3 px-3 text-xs font-medium whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.4)' }}>{h}</th>
                     ))}
                   </tr>
@@ -926,19 +925,6 @@ function UserRow({
             {acct.label}
           </span>
         </div>
-      </td>
-      {/* Verified */}
-      <td className="py-3 px-3">
-        <span
-          className="text-xs px-1.5 py-0.5 rounded"
-          style={
-            user.isVerified ?? true
-              ? { background: 'rgba(0,255,178,0.1)', color: '#00FFB2' }
-              : { background: 'rgba(255,69,85,0.1)', color: '#FF4555' }
-          }
-        >
-          {user.isVerified ?? true ? 'Yes' : 'No'}
-        </span>
       </td>
       {/* Joined */}
       <td className="py-3 px-3">

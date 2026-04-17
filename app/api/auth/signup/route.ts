@@ -46,7 +46,6 @@ export async function POST(req: NextRequest) {
       totalEarned: 5,
       plan: 'free',
       isAdmin: false,
-      isVerified: true,
     })
 
     // Welcome bonus transaction

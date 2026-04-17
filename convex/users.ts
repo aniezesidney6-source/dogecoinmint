@@ -19,7 +19,6 @@ export const createUser = mutation({
       hashrate: 45,
       referralCount: 0,
       miningActive: true,
-      isVerified: true,
       status: 'active' as const,
       createdAt: Date.now(),
     })
@@ -185,7 +184,6 @@ export const verifyUser = mutation({
     }
 
     await ctx.db.patch(user._id, {
-      isVerified: true,
       verificationCode: undefined,
       verificationExpiry: undefined,
     })
