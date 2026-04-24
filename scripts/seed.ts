@@ -56,7 +56,7 @@ async function seed() {
   // Admin user
   const adminPw = await bcrypt.hash('Admin0147', 10)
   const adminId = await convex.mutation(api.users.createUser, {
-    email: 'admin@dogecoinmint.com',
+    email: 'admin@chainforgeX.com',
     password: adminPw,
     username: 'admin',
     balance: 0,
@@ -121,7 +121,7 @@ async function seed() {
   console.log(`Seeded ${txCount} transactions`)
 
   console.log('\n✅ Seed complete!')
-  console.log('Admin: admin@dogecoinmint.com / Admin0147')
+  console.log('Admin: admin@chainforgeX.com / Admin0147')
   console.log('Demo:  demo@cryptomine.io  / demo1234')
 }
 

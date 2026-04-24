@@ -372,7 +372,7 @@ export default function WalletPage() {
               className="text-xs font-semibold uppercase tracking-widest mb-5"
               style={{ color: 'rgba(247,183,49,0.6)' }}
             >
-              DogecoinMint Deposit Address
+              ChainForgeX Deposit Address
             </p>
 
             <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">

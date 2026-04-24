@@ -228,8 +228,8 @@ export default function DashboardPage() {
         >
           <span>⚠</span>
           Your account is frozen. Contact{' '}
-          <a href="mailto:support@dogecoinmint.com" style={{ color: '#F7B731', textDecoration: 'underline' }}>
-            support@dogecoinmint.com
+          <a href="mailto:support@chainforgeX.com" style={{ color: '#F7B731', textDecoration: 'underline' }}>
+            support@chainforgeX.com
           </a>{' '}
           to resolve this.
         </div>
@@ -334,7 +334,7 @@ export default function DashboardPage() {
           <div className="w-full mt-4 space-y-2">
             <div className="flex justify-between text-xs">
               <span style={{ color: 'rgba(255,255,255,0.4)' }}>Pool</span>
-              <span style={{ color: 'rgba(255,255,255,0.7)' }}>DogecoinMint Global #1</span>
+              <span style={{ color: 'rgba(255,255,255,0.7)' }}>ChainForgeX Global #1</span>
             </div>
             <div className="flex justify-between text-xs">
               <span style={{ color: 'rgba(255,255,255,0.4)' }}>Worker ID</span>

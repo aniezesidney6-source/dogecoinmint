@@ -19,7 +19,8 @@ export default defineSchema({
     createdAt: v.number(),
     // Account status
     status: v.optional(v.union(v.literal('active'), v.literal('frozen'), v.literal('banned'))),
-    // Email verification (fields kept for legacy data, no longer enforced)
+    // Legacy verification fields — kept for existing documents, no longer used
+    isVerified: v.optional(v.boolean()),
     verificationCode: v.optional(v.string()),
     verificationExpiry: v.optional(v.number()),
     // Password reset

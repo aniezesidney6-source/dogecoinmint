@@ -118,6 +118,17 @@ export const getUserByUsername = query({
   },
 })
 
+export const verifyAllUsers = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query('users').collect()
+    for (const user of users) {
+      await ctx.db.patch(user._id, { status: 'active' as const })
+    }
+    return { updated: users.length }
+  },
+})
+
 // ─── Account management ──────────────────────────────────────────────────────
 
 export const deleteUser = mutation({

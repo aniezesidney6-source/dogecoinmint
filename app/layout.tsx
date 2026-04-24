@@ -20,8 +20,8 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'DogecoinMint — Mine. Earn. Repeat.',
-  description: 'Cloud-based Dogecoin mining simulation with real network data, referral rewards, and instant payouts.',
+  title: 'ChainForgeX — Cloud Mining Platform',
+  description: 'Mine smarter with ChainForgeX. Cloud-based crypto mining powered by real network data.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

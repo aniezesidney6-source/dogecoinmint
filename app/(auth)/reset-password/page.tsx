@@ -135,8 +135,8 @@ function ResetPasswordContent() {
           <Link href="/" className="inline-flex items-center gap-2.5 justify-center">
             <DogeCoinIcon />
             <span className="font-bold text-2xl tracking-tight" style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 800 }}>
-              <span style={{ color: '#F7B731' }}>Dogecoin</span>
-              <span style={{ color: '#00FFB2' }}>Mint</span>
+              <span style={{ color: '#F7B731' }}>ChainForge</span>
+              <span style={{ color: '#00FFB2' }}>X</span>
             </span>
           </Link>
         </div>
@@ -153,7 +153,7 @@ function ResetPasswordContent() {
             Set new password
           </h2>
           <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            Choose a strong password for your DogecoinMint account.
+            Choose a strong password for your ChainForgeX account.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">

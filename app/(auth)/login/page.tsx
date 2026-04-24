@@ -92,13 +92,13 @@ export default function LoginPage() {
       const result = await signIn('credentials', { email, password, redirect: false });
       if (result?.error) {
         if ((result as { code?: string }).code === 'AccountBanned') {
-          toast('Your account has been banned. Contact support@dogecoinmint.com', 'error');
+          toast('Your account has been banned. Contact support@chainforgeX.com', 'error');
         } else {
           toast('Invalid email or password', 'error');
         }
       } else {
         toast('Welcome back!', 'success');
-        router.push('/dashboard');
+        window.location.href = '/dashboard';
       }
     } finally {
       setLoading(false);
@@ -133,8 +133,8 @@ export default function LoginPage() {
               className="font-bold text-2xl tracking-tight"
               style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 800 }}
             >
-              <span style={{ color: '#F7B731' }}>Dogecoin</span>
-              <span style={{ color: '#00FFB2' }}>Mint</span>
+              <span style={{ color: '#F7B731' }}>ChainForge</span>
+              <span style={{ color: '#00FFB2' }}>X</span>
             </span>
           </Link>
           <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>

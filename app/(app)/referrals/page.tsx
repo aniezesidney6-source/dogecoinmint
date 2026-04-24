@@ -86,7 +86,7 @@ export default function ReferralsPage() {
       <div>
         <h1 className="font-bold text-2xl md:text-3xl" style={{ fontFamily: 'var(--font-space-grotesk)' }}>Referrals</h1>
         <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
-          Earn more by growing the DogecoinMint community
+          Earn more by growing the ChainForgeX community
         </p>
       </div>
 
@@ -122,7 +122,7 @@ export default function ReferralsPage() {
         </div>
         <div className="flex gap-2 mt-3">
           <a
-            href={`https://twitter.com/intent/tweet?text=I'm mining DOGE on DogecoinMint! Join me: ${encodeURIComponent(referralURL)}`}
+            href={`https://twitter.com/intent/tweet?text=I'm mining DOGE on ChainForgeX! Join me: ${encodeURIComponent(referralURL)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all hover:-translate-y-0.5"
@@ -131,7 +131,7 @@ export default function ReferralsPage() {
             <XIcon size={14} /> Tweet
           </a>
           <a
-            href={`https://t.me/share/url?url=${encodeURIComponent(referralURL)}&text=Join DogecoinMint and earn DOGE!`}
+            href={`https://t.me/share/url?url=${encodeURIComponent(referralURL)}&text=Join ChainForgeX and earn DOGE!`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all hover:-translate-y-0.5"

@@ -96,8 +96,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             className="font-bold text-lg tracking-tight"
             style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 800 }}
           >
-            <span style={{ color: '#F7B731' }}>Dogecoin</span>
-            <span style={{ color: '#00FFB2' }}>Mint</span>
+            <span style={{ color: '#F7B731' }}>ChainForge</span>
+            <span style={{ color: '#00FFB2' }}>X</span>
           </span>
         </Link>
       </div>
@@ -248,8 +248,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             className="font-bold text-base"
             style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 800 }}
           >
-            <span style={{ color: '#F7B731' }}>Dogecoin</span>
-            <span style={{ color: '#00FFB2' }}>Mint</span>
+            <span style={{ color: '#F7B731' }}>ChainForge</span>
+            <span style={{ color: '#00FFB2' }}>X</span>
           </span>
           <div className="w-8" />
         </div>

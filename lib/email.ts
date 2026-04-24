@@ -7,7 +7,7 @@ function getResend(): Resend {
   return _resend
 }
 
-const FROM = 'DogecoinMint <support@dogecoinmint.com>'
+const FROM = 'ChainForgeX <support@chainforgeX.com>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
 // ─── Shared HTML helpers ──────────────────────────────────────────────────────
@@ -23,14 +23,14 @@ function emailWrapper(body: string): string {
         <!-- Logo -->
         <tr><td align="center" style="padding-bottom:32px;">
           <span style="font-size:22px;font-weight:800;letter-spacing:-0.5px;">
-            <span style="color:#F7B731;">Dogecoin</span><span style="color:#00FFB2;">Mint</span>
+            <span style="color:#F7B731;">ChainForge</span><span style="color:#00FFB2;">X</span>
           </span>
         </td></tr>
         ${body}
         <!-- Footer -->
         <tr><td style="padding-top:32px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
           <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.3);">
-            © ${new Date().getFullYear()} DogecoinMint. All rights reserved.
+            © ${new Date().getFullYear()} ChainForgeX. All rights reserved.
           </p>
         </td></tr>
       </table>
@@ -56,7 +56,7 @@ export async function sendVerificationEmail(
   const html = emailWrapper(`
     <tr><td style="padding-bottom:24px;">
       <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#ffffff;">Verify your email</h2>
-      <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.55);">Hi ${username}, enter this code to verify your DogecoinMint account.</p>
+      <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.55);">Hi ${username}, enter this code to verify your ChainForgeX account.</p>
     </td></tr>
     <tr><td align="center" style="padding:20px 0 28px;">
       <div style="display:inline-block;padding:20px 40px;background:rgba(247,183,49,0.08);border:1px solid rgba(247,183,49,0.25);border-radius:12px;">
@@ -67,14 +67,14 @@ export async function sendVerificationEmail(
       <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.45);text-align:center;">This code expires in <strong style="color:#ffffff;">15 minutes</strong>.</p>
     </td></tr>
     <tr><td>
-      <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.3);text-align:center;">If you didn't create an account on DogecoinMint, you can safely ignore this email.</p>
+      <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.3);text-align:center;">If you didn't create an account on ChainForgeX, you can safely ignore this email.</p>
     </td></tr>
   `)
 
   await getResend().emails.send({
     from: FROM,
     to: email,
-    subject: `Your DogecoinMint verification code: ${code}`,
+    subject: `Your ChainForgeX verification code: ${code}`,
     html,
   })
 }
@@ -87,7 +87,7 @@ export async function sendWelcomeEmail(email: string, username: string): Promise
   const html = emailWrapper(`
     <tr><td style="padding-bottom:24px;">
       <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#ffffff;">Welcome, ${username}! 🎉</h2>
-      <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.55);">Your DogecoinMint account has been created successfully.</p>
+      <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.55);">Your ChainForgeX account has been created successfully.</p>
     </td></tr>
     <tr><td style="padding-bottom:20px;">
       <div style="padding:16px;background:rgba(0,255,178,0.06);border:1px solid rgba(0,255,178,0.2);border-radius:10px;">
@@ -108,7 +108,7 @@ export async function sendWelcomeEmail(email: string, username: string): Promise
   await getResend().emails.send({
     from: FROM,
     to: email,
-    subject: '🐕 Welcome to DogecoinMint — You\'re almost ready!',
+    subject: '⛏ Welcome to ChainForgeX — You\'re almost ready!',
     html,
   })
 }
@@ -125,7 +125,7 @@ export async function sendPasswordResetEmail(
   const html = emailWrapper(`
     <tr><td style="padding-bottom:24px;">
       <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#ffffff;">Reset your password</h2>
-      <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.55);">Hi ${username}, you requested a password reset for your DogecoinMint account.</p>
+      <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.55);">Hi ${username}, you requested a password reset for your ChainForgeX account.</p>
     </td></tr>
     ${ctaButton('Reset Password →', resetUrl)}
     <tr><td style="padding-top:20px;">
@@ -142,7 +142,7 @@ export async function sendPasswordResetEmail(
   await getResend().emails.send({
     from: FROM,
     to: email,
-    subject: 'Reset your DogecoinMint password',
+    subject: 'Reset your ChainForgeX password',
     html,
   })
 }

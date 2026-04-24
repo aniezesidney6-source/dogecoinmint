@@ -1,8 +1,8 @@
-# CryptoMine
+# ChainForgeX
 
 A production-ready crypto mining simulation SaaS with real Dogecoin network data.
 
-**Admin login:** `admin@cryptomine.io` / `admin123`  
+**Admin login:** `admin@chainforgeX.com` / `Admin0147`  
 **Demo login:** `demo@cryptomine.io` / `demo1234`
 
 ## Setup

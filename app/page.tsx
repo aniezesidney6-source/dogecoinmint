@@ -27,16 +27,16 @@ interface Particle { x: number; y: number; size: number; duration: number; delay
 // Static data
 // ─────────────────────────────────────────────────────────────────
 const FAQS = [
-  { q: 'How does DogecoinMint work?', a: 'DogecoinMint simulates cloud mining by allocating virtual hashrate to your account. We use real Dogecoin network data to make earnings feel authentic. Your simulated miners run 24/7 in the cloud.' },
+  { q: 'How does ChainForgeX work?', a: 'ChainForgeX simulates cloud mining by allocating virtual hashrate to your account. We use real Dogecoin network data to make earnings feel authentic. Your simulated miners run 24/7 in the cloud.' },
   { q: 'How are earnings calculated?', a: "Earnings scale with your plan's hashrate relative to the real Dogecoin network. Higher network difficulty slightly reduces yield. Each referral adds 5% bonus, up to 50% total." },
   { q: 'When can I withdraw?', a: 'Request a withdrawal of any amount above 10 DOGE at any time. Processed within 3–5 business days to your DOGE wallet. A 0.5 DOGE network fee applies.' },
   { q: 'How do referrals work?', a: 'Share your unique link. Every friend who signs up and mines boosts your earnings by 5%. Stack up to 10 referrals for a 50% boost.' },
   { q: 'Is there a free plan?', a: 'Yes! Free gets you 45 MH/s and roughly 1.15 DOGE/day — no card needed, no expiry.' },
-  { q: 'Is this real blockchain mining?', a: 'DogecoinMint is a simulation that uses real on-chain data (price, hashrate, difficulty) to compute realistic earnings. No physical miners involved.' },
+  { q: 'Is this real blockchain mining?', a: 'ChainForgeX is a simulation that uses real on-chain data (price, hashrate, difficulty) to compute realistic earnings. No physical miners involved.' },
 ];
 
 const TESTIMONIALS = [
-  { name: 'Alex Turner', handle: '@alexturner92', quote: "Been using DogecoinMint 3 months and already hit my first payout. Pro plan easily pays for itself.", avatar: 'Alex+Turner' },
+  { name: 'Alex Turner', handle: '@alexturner92', quote: "Been using ChainForgeX 3 months and already hit my first payout. Pro plan easily pays for itself.", avatar: 'Alex+Turner' },
   { name: 'Sarah Chen', handle: '@sarahchen_dev', quote: "Referral system is brilliant. Got 8 friends on board, earnings jumped 40%. Dashboard is clean.", avatar: 'Sarah+Chen' },
   { name: 'Marcus Webb', handle: '@marcuswebb', quote: "Finally a platform that uses real market data. Watching earnings scale with actual DOGE prices is legit.", avatar: 'Marcus+Webb' },
 ];
@@ -379,11 +379,10 @@ export default function LandingPage() {
               fontFamily: 'var(--font-space-grotesk)',
               fontWeight: 800,
               fontSize: 18,
-              color: '#F7B731',
               letterSpacing: '-0.5px',
             }}
           >
-            DogecoinMint
+            <span style={{ color: '#F7B731' }}>ChainForge</span><span style={{ color: '#00FFB2' }}>X</span>
           </span>
         </Link>
 
@@ -616,7 +615,7 @@ export default function LandingPage() {
           <h2
             style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 800, fontSize: 'clamp(28px, 4vw, 40px)', letterSpacing: '-1px' }}
           >
-            Why DogecoinMint?
+            Why ChainForgeX?
           </h2>
           <p className="mt-3 text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
             Everything you need to mine smarter
@@ -877,10 +876,8 @@ export default function LandingPage() {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <DogeCoinIcon size={22} />
-                <span
-                  style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 800, fontSize: 17, color: '#F7B731' }}
-                >
-                  DogecoinMint
+                <span style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 800, fontSize: 17 }}>
+                  <span style={{ color: '#F7B731' }}>ChainForge</span><span style={{ color: '#00FFB2' }}>X</span>
                 </span>
               </div>
               <p className="text-sm max-w-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
@@ -930,7 +927,7 @@ export default function LandingPage() {
             style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
           >
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
-              © 2026 DogecoinMint.
+              © 2026 ChainForgeX.
             </p>
             <div className="flex gap-6">
               {['Privacy Policy', 'Terms of Service'].map((l) => (

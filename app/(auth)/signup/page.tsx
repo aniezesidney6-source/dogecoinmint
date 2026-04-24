@@ -129,7 +129,7 @@ function SignupForm() {
         toast(data.error ?? 'Signup failed', 'error');
         return;
       }
-      toast('Account created! Welcome to DogecoinMint 🎉', 'success');
+      toast('Account created! Welcome to ChainForgeX 🎉', 'success');
       router.push('/dashboard');
     } catch (err) {
       console.error('Signup fetch error:', err);
@@ -167,8 +167,8 @@ function SignupForm() {
               className="font-bold text-2xl tracking-tight"
               style={{ fontFamily: 'var(--font-space-grotesk)', fontWeight: 800 }}
             >
-              <span style={{ color: '#F7B731' }}>Dogecoin</span>
-              <span style={{ color: '#00FFB2' }}>Mint</span>
+              <span style={{ color: '#F7B731' }}>ChainForge</span>
+              <span style={{ color: '#00FFB2' }}>X</span>
             </span>
           </Link>
           <p className="mt-2 text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>

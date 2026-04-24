@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 const FAQS = [
   {
-    q: 'How does DogecoinMint work?',
-    a: 'DogecoinMint simulates cloud mining by allocating virtual hashrate to your account. We use real Dogecoin network data to make earnings feel authentic. Your simulated miners run 24/7 in the cloud.',
+    q: 'How does ChainForgeX work?',
+    a: 'ChainForgeX simulates cloud mining by allocating virtual hashrate to your account. We use real Dogecoin network data to make earnings feel authentic. Your simulated miners run 24/7 in the cloud.',
   },
   {
     q: 'How are earnings calculated?',

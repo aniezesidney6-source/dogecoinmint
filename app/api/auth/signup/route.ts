@@ -92,12 +92,12 @@ export async function POST(req: NextRequest) {
       const { Resend } = require('resend')
       const resend = new Resend(process.env.RESEND_API_KEY)
       await resend.emails.send({
-        from: 'DogecoinMint <support@dogecoinmint.com>',
+        from: 'ChainForgeX <support@chainforgeX.com>',
         to: email,
-        subject: '🐕 Welcome to DogecoinMint — Your Mining Has Started!',
+        subject: '⛏ Welcome to ChainForgeX — Your Mining Has Started!',
         html: `
           <div style="background:#050810;color:#ffffff;font-family:sans-serif;padding:40px;max-width:600px;margin:0 auto;border-radius:16px;">
-            <h1 style="color:#F7B731;font-size:24px;margin:0;">Dogecoin<span style="color:#00FFB2;">Mint</span></h1>
+            <h1 style="color:#F7B731;font-size:24px;margin:0;">ChainForge<span style="color:#00FFB2;">X</span></h1>
             <h2 style="margin-top:24px;">Welcome, ${username}! 🎉</h2>
             <p style="color:rgba(255,255,255,0.7);">Your account is active and mining has started.</p>
             <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;margin:24px 0;text-align:center;">
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
             <div style="text-align:center;margin-top:32px;">
               <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="background:#F7B731;color:#000000;padding:14px 32px;border-radius:999px;text-decoration:none;font-weight:700;">Go to Dashboard →</a>
             </div>
-            <p style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin-top:32px;">© 2026 DogecoinMint</p>
+            <p style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin-top:32px;">© 2026 ChainForgeX</p>
           </div>
         `,
       })
