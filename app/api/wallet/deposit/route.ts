@@ -1,12 +1,12 @@
 import { NextRequest } from 'next/server'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/session'
 import { convex } from '@/lib/convex'
 import { api } from '@/convex/_generated/api'
 import { Id } from '@/convex/_generated/dataModel'
 
 export async function POST(req: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const session = await getSession()
+  if (!session?.id) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   }
 
   const user = await convex.query(api.users.getUserById, {
-    id: session.user.id as Id<'users'>,
+    id: session.id as Id<'users'>,
   })
   if (!user) return Response.json({ error: 'User not found' }, { status: 404 })
 

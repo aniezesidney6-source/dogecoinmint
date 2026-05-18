@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Cpu, DollarSign, TrendingUp, Award, Play, Pause, Activity } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/lib/useClientSession';
 import { MiningRing } from '@/components/MiningRing';
 import { EarningsChart } from '@/components/EarningsChart';
 import { StatCard } from '@/components/StatCard';

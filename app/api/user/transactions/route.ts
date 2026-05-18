@@ -1,12 +1,12 @@
 import { NextRequest } from 'next/server'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/session'
 import { convex } from '@/lib/convex'
 import { api } from '@/convex/_generated/api'
 import { Id } from '@/convex/_generated/dataModel'
 
 export async function GET(req: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.id) {
+  const session = await getSession()
+  if (!session?.id) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const type = searchParams.get('type') ?? undefined
 
   const result = await convex.query(api.transactions.getUserTransactions, {
-    userId: session.user.id as Id<'users'>,
+    userId: session.id as Id<'users'>,
     type: type ?? undefined,
     limit,
     offset: (page - 1) * limit,

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2, Check } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/lib/useClientSession';
 import { PLAN_HASHRATES, PLAN_RATES, PLAN_PRICES } from '@/lib/constants';
 
 const PLAN_FEATURES: Record<string, string[]> = {
@@ -57,7 +57,7 @@ const INPUT_STYLE = {
 };
 
 export default function UpgradePage() {
-  const { data: session, update: updateSession } = useSession();
+  const { data: session } = useSession();
   const { toast } = useToast();
   const [dogePrice, setDogePrice] = useState(0.08);
   const [investment, setInvestment] = useState(100);
@@ -82,7 +82,6 @@ export default function UpgradePage() {
         body: JSON.stringify({ userId: session?.user.id, plan }),
       });
       if (res.ok) {
-        await updateSession({ plan });
         toast(`Upgraded to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan!`, 'success');
       } else {
         toast('Plan upgrade requested! Contact support to complete. (Demo: use admin panel)', 'info');

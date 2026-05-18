@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk, Space_Mono } from 'next/font/google';
 import './globals.css';
-import { SessionProvider } from 'next-auth/react';
 import { ToastProvider } from '@/components/ToastProvider';
 import { ConvexClientProvider } from '@/components/ConvexClientProvider';
 
@@ -35,9 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <ConvexClientProvider>
-          <SessionProvider>
-            <ToastProvider>{children}</ToastProvider>
-          </SessionProvider>
+          <ToastProvider>{children}</ToastProvider>
         </ConvexClientProvider>
       </body>
     </html>

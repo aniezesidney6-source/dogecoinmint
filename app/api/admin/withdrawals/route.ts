@@ -1,12 +1,12 @@
 import { NextRequest } from 'next/server'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/session'
 import { convex } from '@/lib/convex'
 import { api } from '@/convex/_generated/api'
 import { Id } from '@/convex/_generated/dataModel'
 
 export async function GET(req: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.isAdmin) {
+  const session = await getSession()
+  if (!session?.isAdmin) {
     return Response.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -18,8 +18,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.isAdmin) {
+  const session = await getSession()
+  if (!session?.isAdmin) {
     return Response.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -48,13 +48,12 @@ export async function PATCH(req: NextRequest) {
     adminNote,
   })
 
-  // Refund on rejection
   if (action === 'reject') {
     const user = await convex.query(api.users.getUserById, {
       id: withdrawal.userId as Id<'users'>,
     })
     if (user) {
-      const refundAmount = withdrawal.amount + 0.5 // amount + fee
+      const refundAmount = withdrawal.amount + 0.5
       await convex.mutation(api.users.updateUser, {
         id: withdrawal.userId as Id<'users'>,
         fields: { balance: user.balance + refundAmount },

@@ -1,13 +1,13 @@
 import { NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/session'
 import { convex } from '@/lib/convex'
 import { api } from '@/convex/_generated/api'
 import { Id } from '@/convex/_generated/dataModel'
 
 export async function GET(req: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.isAdmin) {
+  const session = await getSession()
+  if (!session?.isAdmin) {
     return Response.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.isAdmin) {
+  const session = await getSession()
+  if (!session?.isAdmin) {
     return Response.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -32,8 +32,8 @@ export async function DELETE(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.isAdmin) {
+  const session = await getSession()
+  if (!session?.isAdmin) {
     return Response.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -51,7 +51,6 @@ export async function PATCH(req: NextRequest) {
     return Response.json({ error: 'userId required' }, { status: 400 })
   }
 
-  // Handle status update
   if (status !== undefined) {
     await convex.mutation(api.users.updateUserStatus, {
       id: userId as Id<'users'>,
@@ -59,7 +58,6 @@ export async function PATCH(req: NextRequest) {
     })
   }
 
-  // Handle balance / plan update via updateUser
   if (balance !== undefined || plan !== undefined) {
     const fields: Record<string, unknown> = {}
     if (balance !== undefined) fields.balance = balance
@@ -71,7 +69,6 @@ export async function PATCH(req: NextRequest) {
     })
   }
 
-  // Handle credential updates via updateUserCredentials
   if (email !== undefined || newPassword !== undefined) {
     const credFields: { email?: string; password?: string } = {}
 
@@ -79,7 +76,6 @@ export async function PATCH(req: NextRequest) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return Response.json({ error: 'Invalid email address' }, { status: 400 })
       }
-      // Check email not already taken by another user
       const existing = await convex.query(api.users.getUserByEmail, {
         email: email.toLowerCase(),
       })

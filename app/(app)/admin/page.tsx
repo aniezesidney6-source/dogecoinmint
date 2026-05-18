@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/lib/useClientSession';
 import { useRouter } from 'next/navigation';
 import { Search, Check, X, Edit2, RefreshCw, Loader2, Eye, EyeOff, MoreHorizontal } from 'lucide-react';
 import { useToast } from '@/components/ToastProvider';

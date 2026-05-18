@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
@@ -82,35 +81,27 @@ export default function LoginPage() {
     e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)';
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleLogin = async () => {
     setLoading(true)
     setError('')
 
     try {
-      console.log('Attempting login with:', email)
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       })
-      console.log('Full result:', JSON.stringify(result))
-      console.log('Result ok:', result?.ok)
-      console.log('Result error:', result?.error)
-      console.log('Result status:', result?.status)
-      console.log('Result url:', result?.url)
 
-      if (result?.error) {
-        setError('Invalid email or password')
-      }
+      const data = await res.json()
+      console.log('Login response:', data)
 
-      if (result?.ok) {
-        console.log('Login successful, redirecting...')
-        window.location.replace('/dashboard')
+      if (res.ok) {
+        window.location.href = '/dashboard'
+      } else {
+        setError(data.error || 'Invalid email or password')
       }
     } catch (err) {
-      console.error('Login error:', err)
-      setError('Something went wrong. Please try again.')
+      setError('Something went wrong')
     } finally {
       setLoading(false)
     }
@@ -162,7 +153,7 @@ export default function LoginPage() {
             backdropFilter: 'blur(20px)',
           }}
         >
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-4">
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
                 Email
