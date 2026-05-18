@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { useToast } from '@/components/ToastProvider';
 
 function DogeCoinIcon() {
   return (
@@ -70,13 +68,12 @@ const INPUT_STYLE = {
 };
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   function focusGold(e: React.FocusEvent<HTMLInputElement>) {
     e.currentTarget.style.border = '1px solid rgba(247,183,49,0.35)';
@@ -85,23 +82,30 @@ export default function LoginPage() {
     e.currentTarget.style.border = '1px solid rgba(255,255,255,0.08)';
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
     try {
-      const result = await signIn('credentials', { email, password, redirect: false });
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
+
+      console.log('SignIn result:', result)
+
       if (result?.error) {
-        if ((result as { code?: string }).code === 'AccountBanned') {
-          toast('Your account has been banned. Contact support@chainforgeX.com', 'error');
-        } else {
-          toast('Invalid email or password', 'error');
-        }
-      } else {
-        toast('Welcome back!', 'success');
-        window.location.href = '/dashboard';
+        setError('Invalid email or password')
+      } else if (result?.ok) {
+        window.location.href = '/dashboard'
       }
+    } catch (err) {
+      console.error('Login error:', err)
+      setError('Something went wrong. Please try again.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -218,6 +222,10 @@ export default function LoginPage() {
                 Remember me
               </label>
             </div>
+
+            {error && (
+              <p className="text-sm text-center" style={{ color: '#ff6b6b' }}>{error}</p>
+            )}
 
             <button
               type="submit"

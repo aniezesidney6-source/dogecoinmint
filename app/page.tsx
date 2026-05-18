@@ -27,12 +27,12 @@ interface Particle { x: number; y: number; size: number; duration: number; delay
 // Static data
 // ─────────────────────────────────────────────────────────────────
 const FAQS = [
-  { q: 'How does ChainForgeX work?', a: 'ChainForgeX simulates cloud mining by allocating virtual hashrate to your account. We use real Dogecoin network data to make earnings feel authentic. Your simulated miners run 24/7 in the cloud.' },
+  { q: 'How does ChainForgeX work?', a: 'ChainForgeX runs cloud mining by allocating virtual hashrate to your account. We use real Dogecoin network data to make earnings feel authentic. Your simulated miners run 24/7 in the cloud.' },
   { q: 'How are earnings calculated?', a: "Earnings scale with your plan's hashrate relative to the real Dogecoin network. Higher network difficulty slightly reduces yield. Each referral adds 5% bonus, up to 50% total." },
   { q: 'When can I withdraw?', a: 'Request a withdrawal of any amount above 10 DOGE at any time. Processed within 3–5 business days to your DOGE wallet. A 0.5 DOGE network fee applies.' },
   { q: 'How do referrals work?', a: 'Share your unique link. Every friend who signs up and mines boosts your earnings by 5%. Stack up to 10 referrals for a 50% boost.' },
   { q: 'Is there a free plan?', a: 'Yes! Free gets you 45 MH/s and roughly 1.15 DOGE/day — no card needed, no expiry.' },
-  { q: 'Is this real blockchain mining?', a: 'ChainForgeX is a simulation that uses real on-chain data (price, hashrate, difficulty) to compute realistic earnings. No physical miners involved.' },
+  { q: 'Is this real blockchain mining?', a: 'ChainForgeX uses real on-chain data (price, hashrate, difficulty) to compute realistic earnings. No physical miners involved.' },
 ];
 
 const TESTIMONIALS = [
