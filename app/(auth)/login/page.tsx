@@ -88,18 +88,25 @@ export default function LoginPage() {
     setError('')
 
     try {
+      console.log('Attempting login with:', email)
       const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
       })
-
-      console.log('SignIn result:', result)
+      console.log('Full result:', JSON.stringify(result))
+      console.log('Result ok:', result?.ok)
+      console.log('Result error:', result?.error)
+      console.log('Result status:', result?.status)
+      console.log('Result url:', result?.url)
 
       if (result?.error) {
         setError('Invalid email or password')
-      } else if (result?.ok) {
-        window.location.href = '/dashboard'
+      }
+
+      if (result?.ok) {
+        console.log('Login successful, redirecting...')
+        window.location.replace('/dashboard')
       }
     } catch (err) {
       console.error('Login error:', err)

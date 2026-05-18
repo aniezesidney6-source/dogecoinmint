@@ -1,18 +1,28 @@
-import NextAuth from 'next-auth';
-import { authConfig } from '@/lib/auth.config';
+import { auth } from './lib/auth'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-const { auth } = NextAuth(authConfig);
+const protectedRoutes = ['/dashboard', '/wallet', '/referrals', '/upgrade', '/admin']
+const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password']
 
-export { auth as proxy };
+export default async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  const session = await auth()
+
+  const isProtected = protectedRoutes.some(route => pathname.startsWith(route))
+  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
+
+  if (isProtected && !session) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  if (isAuthRoute && session && pathname === '/login') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  return NextResponse.next()
+}
 
 export const config = {
-  matcher: [
-    '/dashboard/:path*',
-    '/wallet/:path*',
-    '/referrals/:path*',
-    '/upgrade/:path*',
-    '/admin/:path*',
-    '/login',
-    '/signup',
-  ],
-};
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|_next).*)'],
+}
