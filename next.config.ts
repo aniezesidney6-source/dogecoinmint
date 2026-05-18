@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: [],
+  serverExternalPackages: ['convex'],
+  experimental: {
+    serverComponentsExternalPackages: ['convex']
+  }
 };
 
 export default nextConfig;
