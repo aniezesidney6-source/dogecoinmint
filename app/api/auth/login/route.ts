@@ -8,13 +8,21 @@ import { SignJWT } from 'jose'
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json()
+    console.log('=== LOGIN ATTEMPT ===')
+    console.log('Email:', email)
+    console.log('NEXTAUTH_SECRET exists:', !!process.env.NEXTAUTH_SECRET)
+    console.log('NEXT_PUBLIC_CONVEX_URL:', process.env.NEXT_PUBLIC_CONVEX_URL)
 
     const user = await convex.query(api.users.getUserByEmail, { email })
+    console.log('User found:', !!user)
+
     if (!user) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
     const valid = await bcrypt.compare(password, user.password)
+    console.log('Password valid:', valid)
+
     if (!valid) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
@@ -50,7 +58,7 @@ export async function POST(req: Request) {
       user: { id: user._id, email: user.email, username: user.username, isAdmin: user.isAdmin },
     })
   } catch (err) {
-    console.error('Login error:', err)
-    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+    console.error('=== LOGIN ERROR ===', err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
